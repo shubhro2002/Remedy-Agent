@@ -1,6 +1,6 @@
 from typing import List
 from pydantic import BaseModel, Field
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, AIMessage
 from agent.llm import llm
 from agent.state import SecOpsState
 
@@ -27,6 +27,7 @@ def investigator_node(state: SecOpsState):
     
     return {"messages": [response]}
 
+# Drafter Node
 def drafter_node(state: SecOpsState):
     print("[Drafter] Drafting remediation plan...")
     
@@ -48,4 +49,44 @@ def drafter_node(state: SecOpsState):
     return {
         "findings": plan.findings, #type: ignore
         "planned_actions": plan.planned_actions # type: ignore
+    }
+
+# Guardrail Node
+def guardrail_node(state: SecOpsState):
+    print("[Guardrail] Validating drafted actions...")
+    
+    planned_actions = state.get("planned_actions", [])
+    approved_actions = []
+    
+    for cmd in planned_actions:
+        # Defense-in-depth: Double-checking for destructive commands
+        if " rm " in cmd or " rb " in cmd or "delete" in cmd:
+            print(f"   -> BLOCKED by Graph Guardrail: {cmd}")
+        else:
+            print(f"   -> APPROVED: {cmd}")
+            approved_actions.append(cmd)
+            
+    # Update the state with ONLY the approved actions
+    return {"planned_actions": approved_actions}
+
+# The Execution Node
+def execution_node(state: SecOpsState):
+    print("⚡ [Executor] Executing approved actions...")
+    
+    actions = state.get("planned_actions", [])
+    if not actions:
+        print("   -> No valid actions to execute. Needs re-drafting.")
+        return {"is_remediated": False}
+        
+    # TODO: In the next phase, wire this to the MCP Server to actually run the commands.
+    # For now, simulate a successful execution to complete the state machine loop.
+    for action in actions:
+        print(f"   -> Executing via MCP: {action}")
+        
+    # Simulate success
+    success_msg = AIMessage(content="Execution successful. The vulnerability has been remediated.")
+    
+    return {
+        "messages": [success_msg],
+        "is_remediated": True
     }
