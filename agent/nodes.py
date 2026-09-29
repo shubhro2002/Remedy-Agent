@@ -71,7 +71,7 @@ def guardrail_node(state: SecOpsState):
 
 # The Execution Node
 def execution_node(state: SecOpsState):
-    print("⚡ [Executor] Executing approved actions...")
+    print("[Executor] Executing approved actions...")
     
     actions = state.get("planned_actions", [])
     if not actions:
