@@ -13,8 +13,7 @@ llm = ChatOpenAI(
     model="openai/gpt-6-sol",
     api_key=api_key, # type: ignore
     base_url="https://openrouter.ai/api/v1",
-    temperature=0.1,
-    max_retries=3
+    temperature=0.1
 )
 
 if __name__ == "__main__":
