@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:4.14.0
+    container_name: localstack_secops
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # External services port range
+    environment:
+      - SERVICES=s3                      # S3
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "./scripts/setup_vuln_bucket.sh:/etc/localstack/init/ready.d/setup_vuln_bucket.sh"
+      - "/var/run/docker.sock:/var/run/docker.sock"
