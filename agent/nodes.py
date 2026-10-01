@@ -36,8 +36,13 @@ async def investigator_node(state: SecOpsState):
             
         for tool_call in response.tool_calls:
             print(f"   -> Tool Call: {tool_call['args']}")
+            
             # Execute the MCP tool and append the result to the conversation
             result = await mcp_aws_tool.ainvoke(tool_call["args"])
+            
+            # Show result for debugging
+            print(f"   -> Result: {str(result)[:250]}") 
+            
             messages.append(ToolMessage(content=str(result), tool_call_id=tool_call["id"]))
                 
     return {"messages": messages}

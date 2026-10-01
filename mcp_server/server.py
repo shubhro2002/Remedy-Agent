@@ -11,33 +11,38 @@ class AWSCommand(BaseModel):
     @field_validator("command")
     @classmethod
     def validate_command(cls, v: str) -> str:
-        # 1. Block shell injection characters
+        v = v.strip()
+        if v.startswith("aws "):
+            v = v[4:].strip()
+            
         if re.search(r'[;&|><]', v):
-            raise ValueError("Command chaining or redirection is strictly prohibited for security reasons.")
+            raise ValueError("Command chaining or redirection is strictly prohibited.")
         
-        # 2. Block destructive AWS commands
         if " rb " in v or "delete-bucket" in v or "rm " in v:
-            raise ValueError("Destructive commands (like deleting buckets or objects) are blocked by SecOps guardrails.")
+            raise ValueError("Destructive commands are blocked by SecOps guardrails.")
         
-        # 3. Restrict to specific, approved AWS services
         valid_services = ["s3", "s3api", "ec2", "iam"]
-        first_word = v.strip().split()[0] if v.strip() else ""
+        first_word = v.split()[0] if v else ""
         
         if first_word not in valid_services:
-            raise ValueError(f"Command must start with a supported AWS service: {valid_services}")
+            raise ValueError(f"Command must start with a supported AWS service: {valid_services}. Got: '{first_word}'")
             
         return v
 
 @mcp.tool()
-def execute_aws_cli(command_input: AWSCommand) -> str:
+def execute_aws_cli(command: str) -> str:
     """
     Executes an AWS CLI command against the LocalStack environment.
     Use this to investigate and remediate AWS resources.
     """
-    
-    # FastMCP automatically validates command_input against the Pydantic model.
-    # If it fails validation, FastMCP returns the error to the LLM automatically!
-    full_command = f"aws --endpoint-url=http://localhost:4566 {command_input.command}"
+    try:
+        # Explicitly pass the string through our Pydantic guardrail
+        validated_input = AWSCommand(command=command)
+    except Exception as e:
+        # If Pydantic catches a violation, return the error safely to the LLM
+        return f"Guardrail Error: {e}"
+        
+    full_command = f"aws --endpoint-url=http://localhost:4566 {validated_input.command}"
     
     try:
         result = subprocess.run(
@@ -47,7 +52,7 @@ def execute_aws_cli(command_input: AWSCommand) -> str:
             text=True, 
             capture_output=True
         )
-        return result.stdout.strip()
+        return result.stdout.strip() if result.stdout else "Command executed successfully with no output."
     except subprocess.CalledProcessError as e:
         return f"Command Failed!\nError: {e.stderr.strip()}"
 
