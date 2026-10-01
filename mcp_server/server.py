@@ -36,18 +36,18 @@ def execute_aws_cli(command: str) -> str:
     Use this to investigate and remediate AWS resources.
     """
     try:
-        # Explicitly pass the string through our Pydantic guardrail
         validated_input = AWSCommand(command=command)
     except Exception as e:
-        # If Pydantic catches a violation, return the error safely to the LLM
         return f"Guardrail Error: {e}"
         
-    full_command = f"aws --endpoint-url=http://localhost:4566 {validated_input.command}"
+    # We wrap the command in bash -c so it executes inside the Linux container natively.
+    # This completely bypasses the Windows quote-escaping issues.
+    container_cmd = f"awslocal {validated_input.command}"
     
     try:
         result = subprocess.run(
-            full_command, 
-            shell=True, 
+            # Pass arguments as a list, and remove shell=True
+            ["docker", "exec", "localstack_secops", "bash", "-c", container_cmd], 
             check=True, 
             text=True, 
             capture_output=True
