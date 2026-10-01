@@ -19,7 +19,12 @@ async def investigator_node(state: SecOpsState):
         sys_msg = SystemMessage(content=(
             "You are an elite Cloud Security Investigator. "
             "Your job is to explore the AWS environment, find misconfigured S3 buckets "
-            "(like public-read ACLs), and report them. Use your tools to investigate."
+            "with public-read ACLs, and report them.\n"
+            "CRITICAL RULES:\n"
+            "1. This is a local simulated environment. DO NOT use 'get-bucket-policy', "
+            "'get-public-access-block', or 'get-bucket-policy-status'. They will crash.\n"
+            "2. Focus EXCLUSIVELY on 'list-buckets' and 'get-bucket-acl'.\n"
+            "3. If you see 'AllUsers' with 'READ' in the ACL, it is vulnerable. Stop investigating and output your findings so the drafter can fix it."
         ))
         messages = [sys_msg] + messages
 
