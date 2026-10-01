@@ -1,15 +1,16 @@
 from typing import List
 from pydantic import BaseModel, Field
-from langchain_core.messages import SystemMessage, AIMessage
+from langchain_core.messages import SystemMessage, AIMessage, ToolMessage
 from agent.llm import llm
 from agent.state import SecOpsState
+from agent.mcp_client import mcp_aws_tool
 
 class RemediationPlan(BaseModel):
     findings: str = Field(description="Summary of the security vulnerabilities found.")
     planned_actions: List[str] = Field(description="List of exact AWS CLI commands to fix the issues.")
 
 # Investigator Node
-def investigator_node(state: SecOpsState):
+async def investigator_node(state: SecOpsState):
     print("[Investigator] Analyzing the environment...")
     
     # Ensure the system prompt is present
@@ -22,13 +23,27 @@ def investigator_node(state: SecOpsState):
         ))
         messages = [sys_msg] + messages
 
-    # TODO: Bind the MCP tool to this LLM in the next phase!
-    response = llm.invoke(messages)
+    # Bind the MCP tool
+    llm_with_tools = llm.bind_tools([mcp_aws_tool])
     
-    return {"messages": [response]}
+    # Internal ReAct loop: Keep calling tools until the LLM stops asking for them
+    while True:
+        response = await llm_with_tools.ainvoke(messages)
+        messages.append(response)
+        
+        if not response.tool_calls:
+            break # LLM has finished its investigation
+            
+        for tool_call in response.tool_calls:
+            print(f"   -> Tool Call: {tool_call['args']}")
+            # Execute the MCP tool and append the result to the conversation
+            result = await mcp_aws_tool.ainvoke(tool_call["args"])
+            messages.append(ToolMessage(content=str(result), tool_call_id=tool_call["id"]))
+                
+    return {"messages": messages}
 
 # Drafter Node
-def drafter_node(state: SecOpsState):
+async def drafter_node(state: SecOpsState):
     print("[Drafter] Drafting remediation plan...")
     
     # Bind the LLM to our Pydantic schema to force a structured JSON-like response
@@ -41,7 +56,7 @@ def drafter_node(state: SecOpsState):
     ))
     
     messages = [prompt] + state.get("messages", [])
-    plan = structured_llm.invoke(messages)
+    plan = await structured_llm.ainvoke(messages)
     
     print(f"   -> Drafted {len(plan.planned_actions)} actions.") #type: ignore
     
@@ -52,7 +67,7 @@ def drafter_node(state: SecOpsState):
     }
 
 # Guardrail Node
-def guardrail_node(state: SecOpsState):
+async def guardrail_node(state: SecOpsState):
     print("[Guardrail] Validating drafted actions...")
     
     planned_actions = state.get("planned_actions", [])
@@ -70,7 +85,7 @@ def guardrail_node(state: SecOpsState):
     return {"planned_actions": approved_actions}
 
 # The Execution Node
-def execution_node(state: SecOpsState):
+async def execution_node(state: SecOpsState):
     print("[Executor] Executing approved actions...")
     
     actions = state.get("planned_actions", [])
