@@ -52,7 +52,11 @@ async def drafter_node(state: SecOpsState):
     prompt = SystemMessage(content=(
         "You are a SecOps Remediation Drafter. Review the conversation history. "
         "Draft the exact AWS CLI commands to remediate the vulnerability found by the investigator. "
-        "Do NOT use destructive commands. Fix the ACLs (e.g., using 'put-bucket-acl --acl private')."
+        "CRITICAL RULES:\n"
+        "1. Output ONLY individual, executable AWS CLI commands.\n"
+        "2. DO NOT use bash loops (for/while), variables, or pseudo-code.\n"
+        "3. DO NOT use destructive commands.\n"
+        "4. Target ONLY the specific misconfigured bucket found by the investigator using 'put-bucket-acl'."
     ))
     
     messages = [prompt] + state.get("messages", [])
