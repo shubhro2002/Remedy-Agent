@@ -10,7 +10,7 @@ if not api_key:
     raise ValueError("OPENROUTER_API_KEY environment variable is not set.")
 
 llm = ChatOpenAI(
-    model="openai/gpt-6-sol",
+    model="openai/gpt-4o-mini",
     api_key=api_key, # type: ignore
     base_url="https://openrouter.ai/api/v1",
     temperature=0.1
