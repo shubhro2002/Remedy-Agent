@@ -32,8 +32,23 @@ workflow.add_edge("drafter", "guardrail")      # Pass plan to security check
 workflow.add_edge("guardrail", "executor")     # Pass safe plan to execution
 workflow.add_edge("executor", END)             # Exit point
 
-client = MongoClient(os.environ.get("MONGODB_URI"))
-checkpointer = MongoDBSaver(client)
+mongo_uri = os.environ.get("MONGODB_URI")
+if not mongo_uri:
+    raise ValueError("MONGODB_URI environment variable is required.")
+
+print("Establishing secure connection to MongoDB Atlas...")
+client = MongoClient(mongo_uri)
+
+try:
+    # FAIL FAST: Force a ping to the server to guarantee we have write access
+    # If your IP is not whitelisted in Atlas, this will immediately throw a loud error.
+    client.admin.command('ping')
+    print("MongoDB Atlas connection verified!")
+except Exception as e:
+    print(f"FATAL: Could not connect to MongoDB Atlas. Check your IP Whitelist and Credentials.\nError: {e}")
+    exit(1)
+
+checkpointer = MongoDBSaver(client, db_name="secops_agent_memory")
 
 app = workflow.compile(checkpointer=checkpointer)
 
