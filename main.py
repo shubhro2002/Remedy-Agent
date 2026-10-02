@@ -21,7 +21,7 @@ async def main():
         }
         
         # Thread ID to track the incident across multiple runs or nodes
-        config = {"configurable": {"thread_id": "incident-001"}}
+        config = {"configurable": {"thread_id": "incident-002"}}
         
         async for output in app.astream(initial_state, config=config): # type: ignore
             for node_name, state_update in output.items():
