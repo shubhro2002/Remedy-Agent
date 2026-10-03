@@ -4,6 +4,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from phoenix.otel import register
+from openinference.instrumentation.langchain import LangChainInstrumentor
+
+tracer_provider = register(
+    project_name="secops-auto-remediator",
+    endpoint="http://localhost:6006/v1/traces"
+)
+
+# Auto-instrument all LangChain and LangGraph execution
+LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
+
 from langchain_core.messages import HumanMessage
 from agent.graph import app
 from agent.mcp_client import mcp_adapter
@@ -21,7 +32,7 @@ async def main():
         }
         
         # Thread ID to track the incident across multiple runs or nodes
-        config = {"configurable": {"thread_id": "incident-003"}}
+        config = {"configurable": {"thread_id": "incident-004"}}
         
         async for output in app.astream(initial_state, config=config): # type: ignore
             for node_name, state_update in output.items():
@@ -47,6 +58,7 @@ async def main():
         
     finally:
         await mcp_adapter.disconnect()
+        tracer_provider.shutdown()
         print("Run complete.")
 
 if __name__ == "__main__":
