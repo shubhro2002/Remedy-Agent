@@ -50,7 +50,7 @@ except Exception as e:
 
 checkpointer = MongoDBSaver(client, db_name="secops_agent_memory")
 
-app = workflow.compile(checkpointer=checkpointer)
+app = workflow.compile(checkpointer=checkpointer, interrupt_before=["executor"])
 
 if __name__ == "__main__":
     print("SecOps Graph compiled successfully!")
