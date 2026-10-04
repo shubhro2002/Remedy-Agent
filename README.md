@@ -55,17 +55,17 @@ graph TD
 
 ## Tech Stack
 
-- **AI Orchestration**: LangGraph (Stateful multi-agent workflows)
+- **AI Orchestration**: [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview) (Stateful multi-agent workflows)
 
-- **LLM Engine**: OpenRouter (`gpt-4o-mini` via LangChain)
+- **LLM Engine**: [OpenRouter](https://openrouter.ai/) (`gpt-4o-mini` via LangChain)
 
 - **Tool Decoupling**: Model Context Protocol (MCP) via FastMCP
 
-- **Cloud Infrastructure**: LocalStack & Docker (Zero-risk offline AWS simulation)
+- **Cloud Infrastructure**: [LocalStack](https://www.localstack.cloud) & Docker (Zero-risk offline AWS simulation)
 
-- **Persistent Memory**: MongoDB Atlas (Cross-session distributed checkpointer)
+- **Persistent Memory**: [MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-database) (Cross-session distributed checkpointer)
 
-- **Observability**: Arize Phoenix & OpenTelemetry (Local LLMOps tracing)
+- **Observability**: [Arize Phoenix](https://phoenix.arize.com) & OpenTelemetry (Local LLMOps tracing)
 
 ---
 
@@ -80,3 +80,51 @@ graph TD
 - **Human-in-the-Loop (HITL) Fault Tolerance**: LangGraph checkpointers freeze the graph state directly to MongoDB prior to modifying cloud infrastructure. This allows the system to wait indefinitely for terminal approval, surviving reboots or crashes.
 
 - **OpenTelemetry Observability**: fully instrumented with OpenInference. Traces are routed to a local Arize Phoenix server, providing X-ray visibility into graph transitions, tool latency, and token consumption without exposing data to third-party cloud trackers.
+
+---
+
+## Getting Started
+
+### 1. Prerequisites
+
+   - Python 3.10+
+
+   - Docker Desktop
+
+   - MongoDB Atlas cluster URI (free tier)
+
+### 2. Environment Setup
+
+Install the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Create a `.env` file in the root directory:
+
+```bash
+OPENROUTER_API_KEY="your-openrouter-key"
+MONGODB_URI="mongodb+srv://<user>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority"
+```
+
+### 3. Start the Local Cloud
+
+Spin up the LocalStack container. The `infrastructure` configuration automatically seeds a vulnerable S3 bucket (`company-confidential-data`) with a `public-read` ACL on boot:
+
+```bash
+
+cd infrastructure
+docker-compose up -d
+
+```
+
+### 4. Run the Agent
+
+```bash
+python main.py
+```
+
+- **Flow**: Watch the agent investigate the environment, draft the fix, pause for your `Y/N` approval, and secure the bucket.
+
+- **Observability**: While the agent is running, open `http://localhost:6006` in your browser to view real-time OpenTelemetry traces in the Phoenix UI.
