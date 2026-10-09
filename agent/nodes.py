@@ -4,6 +4,8 @@ from langchain_core.messages import SystemMessage, AIMessage, ToolMessage
 from agent.llm import llm
 from agent.state import SecOpsState
 from agent.mcp_client import mcp_aws_tool
+from pydantic import ValidationError
+from mcp_server.server import AWSCommand
 
 class RemediationPlan(BaseModel):
     findings: str = Field(description="Summary of the security vulnerabilities found.")
@@ -82,20 +84,26 @@ async def drafter_node(state: SecOpsState):
 
 # Guardrail Node
 async def guardrail_node(state: SecOpsState):
-    print("[Guardrail] Validating drafted actions...")
+    print("[Guardrail] Validating drafted actions against Pydantic schema...")
     
     planned_actions = state.get("planned_actions", [])
     approved_actions = []
     
     for cmd in planned_actions:
-        # Defense-in-depth: Double-checking for destructive commands
-        if " rm " in cmd or " rb " in cmd or "delete" in cmd:
-            print(f"   -> BLOCKED by Graph Guardrail: {cmd}")
-        else:
+        try:
+            validated_cmd = AWSCommand(command=cmd)
+            
             print(f"   -> APPROVED: {cmd}")
             approved_actions.append(cmd)
             
-    # Update the state with ONLY the approved actions
+        except ValidationError as e:
+            # Catch the exact reason Pydantic rejected it and print it
+            print(f"   -> BLOCKED by Pydantic Guardrail: {cmd}")
+            
+            # Pydantic errors are returned as a list of dictionaries
+            error_msg = e.errors()[0]['msg']
+            print(f"      Reason: {error_msg}")
+
     return {"planned_actions": approved_actions}
 
 # The Execution Node
