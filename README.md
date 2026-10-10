@@ -61,7 +61,7 @@ graph TD
 
 - **Tool Decoupling**: Model Context Protocol (MCP) via FastMCP
 
-- **Cloud Infrastructure**: [LocalStack](https://www.localstack.cloud) & Docker (Zero-risk offline AWS simulation)
+- **Cloud Infrastructure**: [LocalStack](https://www.localstack.cloud) & Docker (Offline AWS simulation)
 
 - **Persistent Memory**: [MongoDB Atlas](https://www.mongodb.com/products/platform/atlas-database) (Cross-session distributed checkpointer)
 
@@ -125,6 +125,12 @@ docker-compose up -d
 python main.py
 ```
 
+![Agent Running](resources/Recording-2.mp4)
+
 - **Flow**: Watch the agent investigate the environment, draft the fix, pause for your `Y/N` approval, and secure the bucket.
 
+![HITL](resources/HITL.png)
+
 - **Observability**: While the agent is running, open `http://localhost:6006` in your browser to view real-time OpenTelemetry traces in the Phoenix UI.
+
+![Phoenix Trace](resources/Recording-1.mp4)
