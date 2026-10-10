@@ -124,7 +124,8 @@ docker-compose up -d
 ```bash
 python main.py
 ```
-<video src="https://github.com/shubhro2002/secops-auto-remediator/raw/main/resources/Recording-2.mp4" controls="controls" muted="muted" width="100%"></video>
+
+https://github.com/user-attachments/assets/b6518097-a22c-420d-993a-5b190e63ecce
 
 - **Flow**: Watch the agent investigate the environment, draft the fix, pause for your `Y/N` approval, and secure the bucket.
 
@@ -132,4 +133,5 @@ python main.py
 
 - **Observability**: While the agent is running, open `http://localhost:6006` in your browser to view real-time OpenTelemetry traces in the Phoenix UI.
 
-<video src="https://github.com/shubhro2002/secops-auto-remediator/raw/main/resources/Recording-1.mp4" controls="controls" muted="muted" width="100%"></video>
+
+
