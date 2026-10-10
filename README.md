@@ -133,5 +133,4 @@ https://github.com/user-attachments/assets/b6518097-a22c-420d-993a-5b190e63ecce
 
 - **Observability**: While the agent is running, open `http://localhost:6006` in your browser to view real-time OpenTelemetry traces in the Phoenix UI.
 
-
-
+https://github.com/user-attachments/assets/60152e6d-9dbf-49d3-8861-82fb2c29704f
