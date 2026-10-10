@@ -125,7 +125,7 @@ docker-compose up -d
 python main.py
 ```
 
-![Agent Running](resources/Recording-2.mp4)
+[Agent Running](resources/Recording-2.mp4)
 
 - **Flow**: Watch the agent investigate the environment, draft the fix, pause for your `Y/N` approval, and secure the bucket.
 
@@ -133,4 +133,4 @@ python main.py
 
 - **Observability**: While the agent is running, open `http://localhost:6006` in your browser to view real-time OpenTelemetry traces in the Phoenix UI.
 
-![Phoenix Trace](resources/Recording-1.mp4)
+[Phoenix Trace](resources/Recording-1.mp4)
